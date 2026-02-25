@@ -32,6 +32,14 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     return sendError(res, 400, "Validation failed");
   }
 
+  if (err?.name === "MulterError") {
+    if (err?.code === "LIMIT_FILE_SIZE") {
+      return sendError(res, 400, "Resume file too large. Max allowed size is 5MB.");
+    }
+
+    return sendError(res, 400, "Invalid file upload");
+  }
+
   if (err?.code === 11000) {
     return sendError(res, 409, "Duplicate resource");
   }

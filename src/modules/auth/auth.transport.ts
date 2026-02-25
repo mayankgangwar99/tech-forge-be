@@ -23,7 +23,7 @@ const baseCookieOptions: Omit<AuthCookieOptions, "maxAge"> = {
   httpOnly: true,
   secure: IS_PRODUCTION,
   sameSite: AUTH_COOKIE_SAME_SITE,
-  domain: env.COOKIE_DOMAIN,
+  ...(env.COOKIE_DOMAIN && { domain: env.COOKIE_DOMAIN }),
   path: "/",
 };
 

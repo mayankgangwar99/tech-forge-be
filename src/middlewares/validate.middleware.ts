@@ -1,26 +1,39 @@
-import { NextFunction, Request, Response } from "express";
-import { ZodTypeAny } from "zod";
+import { Request, Response, NextFunction } from "express";
+import { ZodError, ZodTypeAny } from "zod";
 
-interface ValidationSchema {
+export type ValidationSchema = {
   body?: ZodTypeAny;
   query?: ZodTypeAny;
   params?: ZodTypeAny;
-}
+};
 
 export const validate = (schema: ValidationSchema) => {
-  return async (req: Request, _res: Response, next: NextFunction) => {
-    if (schema.body) {
-      req.body = await schema.body.parseAsync(req.body);
-    }
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (schema.body) {
+        req.body = await schema.body.parseAsync(req.body);
+      }
 
-    if (schema.query) {
-      req.query = (await schema.query.parseAsync(req.query)) as Request["query"];
-    }
+      if (schema.query) {
+        await schema.query.parseAsync(req.query);
+      }
 
-    if (schema.params) {
-      req.params = (await schema.params.parseAsync(req.params)) as Request["params"];
-    }
+      if (schema.params) {
+        const parsedParams = await schema.params.parseAsync(req.params);
+        req.params = parsedParams as Request["params"];
+      }
 
-    next();
+      return next();
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          success: false,
+          message: "Validation failed",
+          errors: error.flatten(),
+        });
+      }
+
+      return next(error);
+    }
   };
 };

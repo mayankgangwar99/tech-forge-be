@@ -439,6 +439,229 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Resume - Cookie Mode",
+      "description": "Requires authenticated cookie session and CSRF token for upload/delete.",
+      "item": [
+        {
+          "name": "1) Upload Resume",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-csrf-token",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "resume",
+                  "type": "file",
+                  "src": "{{resume_file_path}}"
+                },
+                {
+                  "key": "role",
+                  "type": "text",
+                  "value": "{{target_role}}"
+                },
+                {
+                  "key": "experience",
+                  "type": "text",
+                  "value": "{{target_experience}}"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/resume/upload",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "resume",
+                "upload"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2) List Resumes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resume?page=1&limit=10&sort=newest",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "resume"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "newest"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3) Delete Resume",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "x-csrf-token",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resume/{{resume_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "resume",
+                "{{resume_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Resume - Bearer Mode",
+      "description": "Requires Authorization header in bearer mode.",
+      "item": [
+        {
+          "name": "1) Upload Resume",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "resume",
+                  "type": "file",
+                  "src": "{{resume_file_path}}"
+                },
+                {
+                  "key": "role",
+                  "type": "text",
+                  "value": "{{target_role}}"
+                },
+                {
+                  "key": "experience",
+                  "type": "text",
+                  "value": "{{target_experience}}"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/resume/upload",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "resume",
+                "upload"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2) List Resumes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resume?page=1&limit=10&sort=newest",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "resume"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "newest"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3) Delete Resume",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resume/{{resume_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "resume",
+                "{{resume_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "variable": [
@@ -473,6 +696,22 @@
     {
       "key": "refresh_token",
       "value": ""
+    },
+    {
+      "key": "resume_id",
+      "value": ""
+    },
+    {
+      "key": "resume_file_path",
+      "value": ""
+    },
+    {
+      "key": "target_role",
+      "value": "Backend Engineer"
+    },
+    {
+      "key": "target_experience",
+      "value": "3-5 years"
     }
   ]
 }

@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import { RateLimiterMemory } from "rate-limiter-flexible";
+import { RateLimiterMemory, RateLimiterMongo } from "rate-limiter-flexible";
+import mongoose from "mongoose";
 import { env } from "../config/env";
 import { sendError } from "../utils/apiResponse";
 import logger from "../config/logger";
@@ -129,6 +130,57 @@ export const authLoginRateLimiter = createRateLimiter({
   duration: env.AUTH_LOGIN_LIMIT_DURATION,
   blockDuration: env.AUTH_LOGIN_LIMIT_BLOCK_DURATION,
 });
+
+let resumeUploadLimiter: RateLimiterMemory | RateLimiterMongo | null = null;
+
+const getResumeUploadLimiter = (): RateLimiterMemory | RateLimiterMongo => {
+  if (resumeUploadLimiter) {
+    return resumeUploadLimiter;
+  }
+
+  if (mongoose.connection.readyState === 1 && mongoose.connection.db) {
+    resumeUploadLimiter = new RateLimiterMongo({
+      storeClient: mongoose.connection.db,
+      keyPrefix: "resume_upload",
+      points: env.RESUME_UPLOAD_LIMIT_POINTS,
+      duration: env.RESUME_UPLOAD_LIMIT_DURATION,
+      insuranceLimiter: new RateLimiterMemory({
+        points: env.RESUME_UPLOAD_LIMIT_POINTS,
+        duration: env.RESUME_UPLOAD_LIMIT_DURATION,
+      }),
+    });
+    return resumeUploadLimiter;
+  }
+
+  resumeUploadLimiter = new RateLimiterMemory({
+    keyPrefix: "resume_upload_fallback",
+    points: env.RESUME_UPLOAD_LIMIT_POINTS,
+    duration: env.RESUME_UPLOAD_LIMIT_DURATION,
+  });
+  return resumeUploadLimiter;
+};
+
+const getResumeUploadRateLimitKey = (req: Request): string => {
+  if (req.user?.id) {
+    return `user:${req.user.id}`;
+  }
+
+  return `ip:${req.ip || "unknown"}`;
+};
+
+export const resumeUploadRateLimiter = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await getResumeUploadLimiter().consume(getResumeUploadRateLimitKey(req));
+    next();
+  } catch {
+    return sendError(
+      res,
+      429,
+      "Resume analyse rate limit exceeded. Please retry after a minute.",
+      [{ message: "resume_analyse_rate_limited" }]
+    );
+  }
+};
 
 export const trackLoginAttempt = async (req: Request, res: Response, next: NextFunction) => {
   scheduleAttemptUpdate(req, res);

@@ -18,6 +18,11 @@ const baseEnv = {
   AUTH_LOGIN_LIMIT_POINTS: "1000",
   AUTH_LOGIN_LIMIT_DURATION: "60",
   AUTH_LOGIN_LIMIT_BLOCK_DURATION: "60",
+  OPENAI_API_KEY: "test-openai-key",
+  OPENAI_MODEL: "gpt-4.1-mini",
+  CLOUDINARY_CLOUD_NAME: "test-cloud",
+  CLOUDINARY_API_KEY: "test-cloudinary-key",
+  CLOUDINARY_API_SECRET: "test-cloudinary-secret",
 };
 
 const clearModule = (path: string): void => {

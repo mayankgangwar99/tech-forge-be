@@ -163,7 +163,7 @@ http://localhost:3000/api/v1/
 
 ## Endpoints
 
--   POST /resume/upload
+-   POST /resume/analyse
 -   GET /resume
 -   DELETE /resume
 
