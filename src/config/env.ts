@@ -67,6 +67,7 @@ const envSchema = z.object({
   GEMINI_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.2),
   GEMINI_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
   GEMINI_RETRY_ATTEMPTS: z.coerce.number().int().min(1).max(8).default(3),
+  AI_PROVIDER: z.enum(["gemini", "openai"]).default("gemini"),
   CLOUDINARY_CLOUD_NAME: z.string().min(1),
   CLOUDINARY_API_KEY: z.string().min(1),
   CLOUDINARY_API_SECRET: z.string().min(1),
@@ -93,3 +94,5 @@ if (
 }
 
 export const env = parsedEnv;
+
+

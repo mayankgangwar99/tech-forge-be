@@ -2,11 +2,9 @@ import { Request, Response } from "express";
 import { sendSuccess } from "../../utils/apiResponse";
 import { AppError } from "../../utils/appError";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { deleteResume } from "./resume.delete.service";
-import { listResumes } from "./resume.list.service";
-import { processResume } from "./resume.service";
+import resumeService from "./resume.service";
 
-export const upload = asyncHandler(async (req: Request, res: Response) => {
+export const uploadResume = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) {
     throw new AppError("Authentication required", 401);
   }
@@ -18,8 +16,30 @@ export const upload = asyncHandler(async (req: Request, res: Response) => {
   const role = req.body.role as string;
   const experience = req.body.experience as string;
 
-  const result = await processResume(req.file.buffer, req.user.id, role, experience);
+  const result = await resumeService.resumeProcessingService(
+    req.file.buffer,
+    req.user.id,
+    role,
+    experience,
+  );
+
+  if (!result) throw new AppError("Failed to process resume", 500);
+
   return sendSuccess(res, 200, "Resume processed successfully", result);
+});
+
+export const currentAnalysis = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Authentication required", 401);
+  }
+
+  const analysis = await resumeService.getCurrentAnalysis(req.user.id);
+
+  if (!analysis) {
+    throw new AppError("No analysis found for the current resume", 404);
+  }
+
+  return sendSuccess(res, 200, "Current resume analysis retrieved successfully", analysis);
 });
 
 export const list = asyncHandler(async (req: Request, res: Response) => {
@@ -27,31 +47,24 @@ export const list = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError("Authentication required", 401);
   }
 
-  const page = Number(req.query.page);
-  const limit = Number(req.query.limit);
-  const sort = req.query.sort as "newest" | "oldest";
+  const { page, limit, sort } = req.query as unknown as {
+    page: number;
+    limit: number;
+    sort: "newest" | "oldest";
+  };
 
-  const paginated = await listResumes({
-    userId: req.user.id,
-    page,
-    limit,
-    sort,
-  });
-
-  return sendSuccess(res, 200, "Resumes fetched successfully", paginated.items, {
-    page: paginated.page,
-    limit: paginated.limit,
-    total: paginated.total,
-    hasNextPage: paginated.hasNextPage,
-  });
+  const resumes = await resumeService.listResumes(req.user.id, page, limit, sort);
+  
+  return sendSuccess(res, 200, "Resumes retrieved successfully", resumes);
 });
 
-export const remove = asyncHandler(async (req: Request, res: Response) => {
+export const deleteResume = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) {
     throw new AppError("Authentication required", 401);
   }
+  
+  const resumeId = req.params.id as string;
+  await resumeService.deleteResume(req.user.id, resumeId);
 
-  const resumeId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  await deleteResume(req.user.id, resumeId);
-  return sendSuccess(res, 200, "Resume deleted successfully", { id: resumeId, deleted: true });
+  return sendSuccess(res, 200, "Resume deleted successfully", null);
 });

@@ -1,4 +1,4 @@
-import mongoose, { Schema, Model } from "mongoose";
+import mongoose, { Model, Schema } from "mongoose";
 import { IResume } from "./resume.types";
 
 type ResumeModel = Model<IResume>;
@@ -11,30 +11,55 @@ const resumeSchema = new Schema<IResume, ResumeModel>(
       required: true,
       index: true,
     },
-
     originalFileUrl: {
       type: String,
       trim: true,
     },
-
+    extractedText: {
+      type: String,
+      trim: true,
+    },
+    resumeScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
+    roleFitScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
+    strengths: {
+      type: [String],
+      default: undefined,
+    },
+    weaknesses: {
+      type: [String],
+      default: undefined,
+    },
+    missingSkills: {
+      type: [String],
+      default: undefined,
+    },
+    suggestions: {
+      type: [String],
+      default: undefined,
+    },
     targetRole: {
       type: String,
       trim: true,
       maxlength: 120,
     },
-
     experienceLevel: {
       type: String,
       trim: true,
       maxlength: 120,
     },
-
     version: {
       type: Number,
       required: true,
       min: 1,
     },
-
     checksum: {
       type: String,
       required: true,
@@ -42,12 +67,12 @@ const resumeSchema = new Schema<IResume, ResumeModel>(
       minlength: 64,
       maxlength: 64,
     },
-
     file: {
       fileName: {
         type: String,
         required: true,
         trim: true,
+        maxlength: 255,
       },
       fileSize: {
         type: Number,
@@ -59,35 +84,44 @@ const resumeSchema = new Schema<IResume, ResumeModel>(
         required: true,
         trim: true,
       },
-      storageProvider: {
-        type: String,
-        enum: ["cloudinary", "s3"],
-        required: true,
-      },
-      publicId: {
+      cloudinaryPublicId: {
         type: String,
         required: true,
+        trim: true,
       },
       secureUrl: {
         type: String,
         required: true,
+        trim: true,
+      },
+      resourceType: {
+        type: String,
+        required: true,
+        trim: true,
       },
     },
-
     ai: {
       status: {
         type: String,
         enum: ["pending", "processing", "processed", "failed"],
         required: true,
-        default: "pending",
       },
-      lastProcessedAt: Date,
+      model: {
+        type: String,
+        trim: true,
+      },
+      parsedAt: {
+        type: Date,
+      },
       failureReason: {
         type: String,
+        trim: true,
         maxlength: 2000,
       },
     },
-
+    insights: {
+      type: Schema.Types.Mixed,
+    },
     softDeleted: {
       type: Boolean,
       default: false,
@@ -97,19 +131,13 @@ const resumeSchema = new Schema<IResume, ResumeModel>(
   {
     timestamps: true,
     versionKey: false,
-  },
+  }
 );
 
-// Indexes
 resumeSchema.index({ userId: 1, createdAt: -1 });
 resumeSchema.index({ userId: 1, checksum: 1 }, { unique: true });
 resumeSchema.index({ userId: 1, version: -1 }, { unique: true });
-resumeSchema.index({
-  userId: 1,
-  softDeleted: 1,
-  createdAt: -1,
-});
 
 export const Resume =
-  mongoose.models.Resume ??
+  (mongoose.models.Resume as ResumeModel | undefined) ??
   mongoose.model<IResume, ResumeModel>("Resume", resumeSchema);

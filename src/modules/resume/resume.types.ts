@@ -1,80 +1,168 @@
 import { Types } from "mongoose";
 import { ResumeInsights } from "../../services/ai.service";
 
-export interface ResumeFileMeta {
+export type StorageProvider = "cloudinary" | "s3";
+
+export type AIStatus = "pending" | "processing" | "processed" | "failed";
+
+export interface IResumeFile {
   fileName: string;
   fileSize: number;
   mimeType: string;
-  cloudinaryPublicId: string;
+  storageProvider: StorageProvider;
+  publicId: string;
   secureUrl: string;
-  resourceType: string;
 }
 
-export interface ResumeAiMeta {
-  status: "pending" | "processing" | "processed" | "failed";
-  model?: string;
-  parsedAt?: Date;
+export interface IResumeAI {
+  status: AIStatus;
+  lastProcessedAt?: Date;
   failureReason?: string;
 }
 
 export interface IResume {
+  _id?: Types.ObjectId;
+
   userId: Types.ObjectId;
-  originalFileUrl?: string;
-  extractedText?: string;
-  resumeScore?: number;
-  roleFitScore?: number;
-  strengths?: string[];
-  weaknesses?: string[];
-  missingSkills?: string[];
-  suggestions?: string[];
+  originalFileUrl: string;
+  targetRole?: string;
+  experienceLevel?: string;
+
   version: number;
   checksum: string;
-  file: ResumeFileMeta;
-  ai: ResumeAiMeta;
-  insights?: ResumeInsights;
+
+  file: IResumeFile;
+
+  ai: IResumeAI;
+
   softDeleted: boolean;
+
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-export interface ResumeUploadInput {
-  userId: string;
-  file: Express.Multer.File;
-  requestId?: string;
+export type AIProvider = "gemini" | "openai";
+
+export interface ITokenUsage {
+  inputTokens: number;
+  outputTokens: number;
 }
 
-export interface ResumeProcessingResult {
+export interface IResumeAnalysis {
+  _id?: Types.ObjectId;
+
+  resumeId: Types.ObjectId;
+  planId?: Types.ObjectId;
+
+  providerUsed: AIProvider;
+  modelUsed: string;
+
+  resumeScore?: number;
+  roleFitScore?: number;
+
+  summary: string;
+  strengths: string[];
+  weaknesses: string[];
+  skillMatch: {
+    matched: string[];
+    missing: string[];
+  };
+  experienceGapAnalysis: string;
+  roleReadinessLevel: "Low" | "Medium" | "High";
+  suggestions: string[];
+
+  extractedTextSummary?: string;
+
+  insights?: ResumeInsights;
+
+  tokenUsage: ITokenUsage;
+
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+
+export interface ResumeUpsertParams {
+  userId: string;
+  role: string;
+  experience: string;
+  stored: {
+    checksum: string;
+    secureUrl: string;
+    bytes: number;
+    publicId: string;
+  };
+}
+export interface ResumeAnalyseUpsertParams {
+  resumeId: Types.ObjectId;
+  modelUsed: string;
+  cleanedText: string;
+  analysis: {
+    summary: string;
+    resumeScore: number;
+    roleFitScore: number;
+    strengths: string[];
+    weaknesses: string[];
+    skillMatch: {
+      matched: string[];
+      missing: string[];
+    };
+    experienceGapAnalysis: string;
+    roleReadinessLevel: "Low" | "Medium" | "High";
+    suggestions: string[];
+  };
+}
+
+export interface ResumeAnalysisResponse {
+  resumeId: string;
+  planId?: string;
+  analysisContext: {
+    targetRole: string;
+    experienceLevel: string;
+  };
+  summary: string;
   resumeScore: number;
   roleFitScore: number;
   strengths: string[];
   weaknesses: string[];
-  missingSkills: string[];
+  skillMatch: {
+    matched: string[];
+    missing: string[];
+  };
+  experienceGapAnalysis: string;
+  roleReadinessLevel: "Low" | "Medium" | "High";
   suggestions: string[];
 }
 
-export interface ResumeListInput {
-  userId: string;
-  page: number;
-  limit: number;
-  sort: "newest" | "oldest";
+
+export interface FileMeta {
+  fileName: string;
+  fileSize: number;
 }
 
-export interface ResumeDTO {
+export interface IAIStatus {
+  status: string;
+  lastProcessedAt?: Date;
+}
+
+export interface AnalysisSummary {
+  resumeScore: number | null;
+  roleFitScore: number | null;
+}
+
+export interface ResumeListItem {
   id: string;
-  userId: string;
-  version: number;
-  checksum: string;
-  file: ResumeFileMeta;
-  ai: ResumeAiMeta;
-  insights?: ResumeInsights;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  targetRole?: string;
+  experienceLevel?: string;
+  file: FileMeta;
+  ai: IAIStatus;
+  analysisSummary: AnalysisSummary;
 }
 
-export interface PaginatedResumeResult {
-  items: ResumeDTO[];
-  page: number;
-  limit: number;
-  total: number;
-  hasNextPage: boolean;
+export interface ResumeListAggregationResult {
+  items: ResumeListItem[];
+  totalCount: { total: number }[];
 }
+
+
